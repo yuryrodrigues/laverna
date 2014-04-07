@@ -6,7 +6,7 @@ define([ ], function () {
     constants.VERSION = '0.4.0';
 
     constants.URL = 'https://laverna.cc/';
-    constants.DROPBOX_KEY = '10iirspliqts95d';
+    constants.DROPBOX_KEY = 'pzscbhwtiq2mflf';
     // constants.DROPBOX_SECRET = null;
 
     // On localhost
