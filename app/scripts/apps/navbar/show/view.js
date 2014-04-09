@@ -11,23 +11,34 @@ define([
     'use strict';
 
     var View = Backbone.Marionette.ItemView.extend({
-        template                 : _.template(Tmpl),
+        template: _.template(Tmpl),
 
-        keyboardEvents           : { },
+        keyboardEvents:  { },
 
-        ui                       : {
-            locationIcon         : '#location-icon',
-            navbarSearchForm     : '.search-form'
+        ui:  {
+            locationIcon     :  '#location-icon',
+            navbarSearchForm :  '.search-form',
+            navbarSearchInput:  '.search-form input',
+            syncBtn          :  '.sync-button',
+            syncStatus       :  '#syncStatus'
         },
 
-        events                   : {
-            'click .sync-button' : 'syncWithCloud',
-            'click .btn-search'  : 'showSearch',
-            'blur .search-input' : 'hideSearch'
+        events:  {
+            'click @ui.syncBtn'           : 'syncWithCloud',
+            'click .btn-search'           : 'showSearch',
+            'blur .search-input'          : 'hideSearch',
+            'keyup @ui.navbarSearchInput' : 'searchKeyup',
+            'submit @ui.navbarSearchForm' : 'searchSubmit'
         },
 
         initialize: function () {
+            _.bindAll(this, 'syncBefore', 'syncAfter');
+
             this.keyboardEvents[App.settings.appSearch] = 'showSearch';
+
+            // Show sync status
+            this.listenTo(App, 'sync:before', this.syncBefore);
+            this.listenTo(App, 'sync:after', this.syncAfter);
         },
 
         onRender: function () {
@@ -38,7 +49,27 @@ define([
 
         syncWithCloud: function (e) {
             e.preventDefault();
-            App.sidebar.currentView.trigger('syncWithCloud');
+            this.trigger('syncWithCloud');
+        },
+
+        syncBefore: function () {
+            this.ui.syncStatus.addClass('animate-spin');
+        },
+
+        syncAfter: function () {
+            this.ui.syncStatus.removeClass('animate-spin');
+        },
+
+        searchSubmit: function (e) {
+            e.preventDefault();
+            var text = this.ui.navbarSearchInput.val();
+            App.navigate('/notes/f/search/q/' + text, true);
+        },
+
+        searchKeyup: function (e) {
+            if (e.which === 27) {
+                this.ui.navbarSearchInput.blur();
+            }
         },
 
         showSearch: function (e) {
