@@ -29,11 +29,12 @@ require.config({
         indexedDB                  :  '../bower_components/indexeddb-backbonejs-adapter/backbone-indexeddb',
         dropzone                   :  '../bower_components/dropzone/downloads/dropzone.min',
         toBlob                     :  '../bower_components/blueimp-canvas-to-blob/js/canvas-to-blob',
+        blobjs                     :  '../bower_components/Blob/Blob',
         fileSaver                  :  '../bower_components/FileSaver/FileSaver',
         enquire                    :  '../bower_components/enquire/dist/enquire.min',
         dropbox                    :  'libs/dropbox',
         // remotestorage              :  'libs/remotestorage',
-        remotestorage              :  '../bower_components/remotestorage.js/release/0.10.0-beta/remotestorage.amd',
+        remotestorage              :  '../bower_components/remotestorage.js/release/0.10.0-beta2/remotestorage.amd',
         'backbone.wreqr'           :  '../bower_components/backbone.wreqr/lib/amd/backbone.wreqr',
         'backbone.babysitter'      :  '../bower_components/backbone.babysitter/lib/amd/backbone.babysitter',
         // Keybindings             :

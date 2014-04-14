@@ -122,7 +122,7 @@ define([
                     }
                     title = $.t(title.substr(0,1).toUpperCase() + title.substr(1));
 
-                    if (this.args.query) {
+                    if (this.args.query && this.args.filter !== 'search') {
                         title += ': ' + this.args.query;
                     }
 
@@ -133,6 +133,10 @@ define([
                     if (this.args.page) {
                         return this.args.page;
                     }
+                },
+
+                notebook: function (model) {
+                    return App.Encryption.API.decrypt(model.get('name'));
                 }
             };
         }
