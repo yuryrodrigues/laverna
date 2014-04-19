@@ -43,7 +43,8 @@ function (_, $, App, Backbone, Template, Checklist, Tags, Img, ace, mathjax, Dro
             'click .modeMenu a': 'switchMode',
             'click @ui.saveBtn': 'save',
             'click .cancelBtn' : 'redirect',
-            'keyup @ui.title'  : 'keyupEvents'
+            'keyup @ui.title'  : 'keyupEvents',
+            'change @ui.notebookId': 'newNotebook'
         },
 
         initialize: function () {
@@ -75,6 +76,19 @@ function (_, $, App, Backbone, Template, Checklist, Tags, Img, ace, mathjax, Dro
         onRender: function() {
             // Pagedown bar always visible
             this.ui.sCont.on('scroll', this.scrollPagedownBar);
+        },
+
+        newNotebook: function (e) {
+            if (this.ui.notebookId.find('.newNotebook').is(':selected')) {
+                App.AppNotebook.trigger('showForm', false);
+
+                this.listenTo(App, 'new:notebook', function (model) {
+                    var tmpl = $( _.template('<option value="{{id}}">{{name}}</option>', model.toJSON()) );
+                    this.ui.notebookId.append(tmpl);
+                    tmpl.prop('selected', true);
+                    this.options.notebooks.add(model);
+                });
+            }
         },
 
         enableSubmitButton: function () {
@@ -259,20 +273,22 @@ function (_, $, App, Backbone, Template, Checklist, Tags, Img, ace, mathjax, Dro
                 }
 
                 // Custom link dialog
-                editor.hooks.set('insertLinkDialog', function (callback) {
-                    var view = new LinkView();
-                    App.Confirm.show({
-                        title: $.t('Insert Hyperlink'),
-                        content: view,
-                        success: function () {
-                            callback(view.link);
-                        },
-                        error  : function () {
-                            callback(null);
-                        }
+                if (editor.hooks.insertLinkDialog) {
+                    editor.hooks.set('insertLinkDialog', function (callback) {
+                        var view = new LinkView();
+                        App.Confirm.show({
+                            title: $.t('Insert Hyperlink'),
+                            content: view,
+                            success: function () {
+                                callback(view.link);
+                            },
+                            error  : function () {
+                                callback(null);
+                            }
+                        });
+                        return true;
                     });
-                    return true;
-                });
+                }
 
                 // Custom image dialog
                 editor.hooks.set('insertImageDialog', function (callback) {
