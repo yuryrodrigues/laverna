@@ -39,6 +39,7 @@
                 <h1 class="page-header">
                     {{ title }}
                     <small>{{ createdDate() }}</small>
+                    <small> - <% if (notebook !== null) { %>{{ notebook }}<% } %></small>
                     <a href="#" class="btn btn-link favorite pull-right">
                         <span class="<% if (isFavorite === 0) {%>icon-star-empty<% } else { %>icon-favorite<% } %>"></span>
                     </a>
@@ -53,7 +54,7 @@
                 </div>
             </div>
             <% } %>
-            <p><% if (notebook !== null) { %>{{ notebook }}<% } %></p>
+            <!--<p><% if (notebook !== null) { %>{{ notebook }}<% } %></p>-->
             {{ getContent() }}
         </div>
     </div>
