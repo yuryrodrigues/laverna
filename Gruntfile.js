@@ -33,7 +33,7 @@ module.exports = function (grunt) {
 			root: '<%= yeoman.dist %>',
 			// config: 'config.xml',
             config: {
-                template: 'config.xml',
+                template: '<%= yeoman.dist %>/config.xml',
                 data: {
                     id: 'org.phonegap.laverna',
                     version: pkg.version,
@@ -48,14 +48,6 @@ module.exports = function (grunt) {
             releases: 'releases',
             releaseName: function () {
                 return (pkg.name + '-' + pkg.version);
-            },
-            icons: {
-                android: {
-                    ldpi  : 'phonegap/www/images/icon/icon-32x32.png',
-                    mdpi  : 'phonegap/www/images/icon/icon-48x48.png',
-                    hdpi  : 'phonegap/www/images/icon/icon-64x64.png',
-                    xhdpi : 'phonegap/www/images/icon/icon-90x90.png'
-                }
             }
 		}
     };
@@ -70,14 +62,6 @@ module.exports = function (grunt) {
                 nospawn: true,
                 livereload: true
             },
-            coffee: {
-                files: ['<%= yeoman.app %>/scripts/{,*/}*.coffee'],
-                tasks: ['coffee:dist']
-            },
-            coffeeTest: {
-                files: ['test/spec/{,*/}*.coffee'],
-                tasks: ['coffee:test']
-            },
             less: {
                 files: ['{.tmp,<%= yeoman.app %>}/styles/{,*/}*.less'],
                 tasks: ['less']
@@ -89,9 +73,10 @@ module.exports = function (grunt) {
                 files: [
                     '<%= yeoman.app %>/*.html',
                     '{.tmp,<%= yeoman.app %>}/styles/{,*/}*.css',
-                    '{.tmp,<%= yeoman.app %>}/scripts/{,*/}*.js',
+                    '{.tmp,<%= yeoman.app %>}/scripts/{,*/,**/}*.js',
                     '<%= yeoman.app %>/images/{,*/}*.{png,jpg,jpeg,gif,webp}',
-                    '<%= yeoman.app %>/scripts/templates/*.{ejs,mustache,hbs}',
+                    '<%= yeoman.app %>/scripts/{,templates/,**/}*.{ejs,mustache,hbs,html}',
+                    '<%= yeoman.app %>/locales/{,**/}*.json',
                     'test/spec/**/*.js'
                 ]
             },
@@ -126,14 +111,15 @@ module.exports = function (grunt) {
             test: {
                 options: {
                     port: 9001,
-                    middleware: function (connect) {
-                        return [
-                            lrSnippet,
-                            mountFolder(connect, '.tmp'),
-                            mountFolder(connect, 'test'),
-                            mountFolder(connect, yeomanConfig.app)
-                        ];
-                    }
+                    base: '.',
+                    // middleware: function (connect) {
+                    //     return [
+                    //         lrSnippet,
+                    //         mountFolder(connect, '.tmp'),
+                    //         mountFolder(connect, 'test'),
+                    //         mountFolder(connect, yeomanConfig.app)
+                    //     ];
+                    // }
                 }
             },
             dist: {
@@ -174,35 +160,18 @@ module.exports = function (grunt) {
         mocha: {
             all: {
                 options: {
-                    run: true,
-                    urls: ['http://localhost:<%= connect.test.options.port %>/index.html']
+                    run: false,
+                    urls: ['http://localhost:<%= connect.test.options.port %>/test/index.html']
                 }
             }
         },
-        coffee: {
-            dist: {
-                files: [{
-                    // rather than compiling multiple files here you should
-                    // require them into your main .coffee file
-                    expand: true,
-                    cwd: '<%= yeoman.app %>/scripts',
-                    src: '{,*/}*.coffee',
-                    dest: '.tmp/scripts',
-                    ext: '.js'
-                }]
-            },
-            test: {
-                files: [{
-                    expand: true,
-                    cwd: 'test/spec',
-                    src: '{,*/}*.coffee',
-                    dest: '.tmp/spec',
-                    ext: '.js'
-                }]
-            }
-        },
-        // Compile less files
         less: {
+            options: {
+                paths: [
+                    '<%= yeoman.app %>/bower_components',
+                    '<%= yeoman.app %>/styles'
+                ],
+            },
             compile: {
                 options: {
                     compress: false,
@@ -222,32 +191,37 @@ module.exports = function (grunt) {
                 options: {
                     engine: 'gm',
                     sizes: [{
-                        width: 256,
-                        height: 256
-                    }, {
-                        width: 196,
-                        height: 196
-                    }, {
-                        width: 128,
+                        // For display on Firefox Marketplace
+                        width:  128,
                         height: 128
                     }, {
-                        width: 90,
-                        height: 90
+                        // web clip icon for iOS
+                        width:  120,
+                        height: 120
                     }, {
-                        width: 64,
-                        height: 64
+                        // web clip icon for iOS
+                        width:  152,
+                        height: 152
                     }, {
-                        width: 60,
-                        height: 60
+                        // Android xhdpi
+                        width:  96,
+                        height: 96
                     }, {
-                        width: 48,
+                        // web clip icon for iOS
+                        width:  76,
+                        height: 76
+                    }, {
+                        // Android & iPad hdpi
+                        width:  72,
+                        height: 72
+                    }, {
+                        // Android & iPad mdpi
+                        width:  48,
                         height: 48
                     }, {
-                        width: 32,
-                        height: 32
-                    }, {
-                        width: 30,
-                        height: 30
+                        // Android ldpi
+                        width:  36,
+                        height: 36
                     }, {
                         width: 16,
                         height: 16
@@ -347,6 +321,7 @@ module.exports = function (grunt) {
                         '.htaccess',
                         'images/{,*/}*.{webp,gif,png}',
                         'font/*',
+                        'config.xml',
                         'locales/*/*',
                         'docs/*.md'
                     ]
@@ -370,8 +345,8 @@ module.exports = function (grunt) {
                         'bower_components/MathJax/extensions/**',
                         'bower_components/MathJax/fonts/HTML-CSS/TeX/woff/**',
                         'bower_components/MathJax/jax/element/**',
-                        'bower_components/MathJax/jax/input/{MathML,TeX}/**',
-                        'bower_components/MathJax/jax/output/{HTML-CSS,NativeMML}/**',
+                        'bower_components/MathJax/jax/input/{MathML,TeX}/{,**/}*',
+                        'bower_components/MathJax/jax/output/{HTML-CSS,NativeMML}/{,*/,***/}*',
                         'bower_components/MathJax/localization/en/**'
                     ]
                 }]
@@ -525,7 +500,6 @@ module.exports = function (grunt) {
         if (target === 'test') {
             return grunt.task.run([
                 'clean:server',
-                'coffee',
                 'createDefaultTemplate',
                 'jst',
                 'connect:test',
@@ -536,7 +510,6 @@ module.exports = function (grunt) {
 
         grunt.task.run([
             'clean:server',
-            'coffee:dist',
             'createDefaultTemplate',
             'jst',
             'less',
@@ -550,7 +523,6 @@ module.exports = function (grunt) {
         isConnected = Boolean(isConnected);
         var testTasks = [
                 'clean:server',
-                // 'coffee',
                 'createDefaultTemplate',
                 'jst',
                 'connect:test',
@@ -580,7 +552,6 @@ module.exports = function (grunt) {
     grunt.registerTask('build', [
         'clean:dist',
         'string-replace:i18nextLocal',
-        // 'coffee',
         'createDefaultTemplate',
         'jst',
         'lessc',

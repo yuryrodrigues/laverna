@@ -6,23 +6,32 @@ define([
     'helpers/uri',
     'collections/notebooks',
     'models/notebook',
-    'apps/encryption/auth',
     'apps/notebooks/notebooksForm/formView'
-], function (_, App, Marionette, URI, Notebooks, Notebook, getAuth, FormView) {
+], function(_, App, Marionette, URI, Notebooks, Notebook, FormView) {
     'use strict';
 
     var Form = App.module('AppNotebooks.NotebookForm');
 
     Form.Controller = Marionette.Controller.extend({
-        initialize: function () {
+        initialize: function() {
             _.bindAll(this, 'addForm', 'editForm', 'show');
-        },
 
-        // Create form initializing
-        addForm: function (args) {
             this.collection = new Notebooks([], {
                 comparator: 'name'
             });
+
+            // Destroy when it's not under use
+            this.on('destroy:it', this.destroy, this);
+        },
+
+        onDestroy: function() {
+            this.view.trigger('destroy');
+        },
+
+        /*
+         * Create form initializing
+         */
+        addForm: function(args) {
             this.model = new Notebook();
             this.isNew = true;
             this.args = args;
@@ -33,11 +42,10 @@ define([
             $.when(this.collection.fetch()).done(this.show);
         },
 
-        // Edit form initializing
-        editForm: function (args) {
-            this.collection = new Notebooks([], {
-                comparator: 'name'
-            });
+        /*
+         * Edit form initializing
+         */
+        editForm: function(args) {
             this.model = new Notebook({id: args.id});
             this.args = args;
 
@@ -47,8 +55,10 @@ define([
             $.when(this.collection.fetch(), this.model.fetch()).done(this.show);
         },
 
-        // Shows form
-        show: function () {
+        /*
+         * Shows form
+         */
+        show: function() {
             var data = this.model.decrypt();
 
             this.view = new FormView ({
@@ -58,43 +68,41 @@ define([
             });
 
             App.modal.show(this.view);
-            this.model.on('save', this.save, this);
+            this.view.on('save', this.save, this);
             this.view.on('redirect', this.redirect, this);
         },
 
-        // Saves data or shows validation errors
-        save: function (data) {
-            var self = this;
+        /**
+         * Saves changes
+         */
+        save: function() {
+            var self = this,
+                data = {
+                    name     : this.view.ui.name.val(),
+                    parentId : this.view.ui.parentId.val()
+                };
 
-            this.model.set(data, {validate: true});
+            // First we need to encrypt data
+            this.model.set(data).encrypt();
 
-            if (this.model.isValid()) {
-                this.model.set(data).encrypt();
-
-                this.model.save(this.model.toJSON(), {
-                    success: function (model) {
-                        if (self.isNew === true) {
-                            App.trigger('new:notebook', model);
-                        }
-
-                        self.view.trigger('destroy');
-
-                        self.redirect();
+            this.model.save(this.model.toJSON(), {
+                success: function(model) {
+                    if (self.isNew === true) {
+                        App.trigger('new:notebook', model);
                     }
-                });
-
-            } else {
-                this.view.showErrors(this.model.validationError);
-            }
+                    self.view.trigger('redirect');
+                }
+            });
         },
 
-        // Redirect
-        redirect: function () {
+        /*
+         * Redirect
+         */
+        redirect: function() {
             if (_.isNull(this.args.redirect) || this.args.redirect === true) {
-                return App.navigate('#' + URI.link('/notebooks'));
+                return App.vent.trigger('navigate:link', '/notebooks');
             }
         }
-
     });
 
     return Form.Controller;

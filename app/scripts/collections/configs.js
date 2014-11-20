@@ -52,10 +52,12 @@ define([
          */
         firstStart: function () {
             var $d = $.Deferred(),
-                self = this;
+                self = this,
+                length;
 
             function check() {
-                if (self.length === self.configNames.length) {
+                length = self.length;
+                if (length === self.configNames.length) {
                     $d.resolve(self);
                     return;
                 }
@@ -66,7 +68,7 @@ define([
                     }
                 });
 
-                $d.resolve(self);
+                $d.resolve({ collection: self, startLength: length });
             }
 
             $.when(this.fetch()).done(check);
@@ -83,6 +85,14 @@ define([
             data.appProfiles = JSON.parse(data.appProfiles || this.configNames.appProfiles);
 
             return data;
+        },
+
+        resetFromJSON: function (jsonSettings) {
+            var newConfs = [];
+            _.forEach(jsonSettings, function (val, key) {
+                newConfs.push({name: key, val: val});
+            });
+            this.reset(newConfs);
         },
 
         createProfile: function (name) {
@@ -112,6 +122,14 @@ define([
                 profiles.save({ value: JSON.stringify(value) });
                 window.indexedDB.deleteDatabase(name);
             }
+        },
+
+        shortcuts: function () {
+            var pattern = /(actions|navigate|jump|appCreateNote|appSearch|appKeyboardHelp)/;
+            return this.filter(function (m) {
+                pattern.lastIndex = 0;
+                return pattern.test(m.get('name'));
+            });
         },
 
         /**

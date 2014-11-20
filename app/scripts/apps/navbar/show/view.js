@@ -2,13 +2,12 @@
 define([
     'underscore',
     'jquery',
-    'app',
     'backbone',
     'helpers/uri',
     'text!apps/navbar/show/template.html',
     'backbone.mousetrap',
     'marionette'
-], function (_, $, App, Backbone, URI, Tmpl) {
+], function (_, $, Backbone, URI, Tmpl) {
     'use strict';
 
     var View = Backbone.Marionette.ItemView.extend({
@@ -25,32 +24,28 @@ define([
         },
 
         events:  {
-            'click @ui.syncBtn'           : 'syncWithCloud',
             'click .btn-search'           : 'showSearch',
             'blur .search-input'          : 'hideSearch',
             'keyup @ui.navbarSearchInput' : 'searchKeyup',
             'submit @ui.navbarSearchForm' : 'searchSubmit'
         },
 
-        initialize: function () {
-            _.bindAll(this, 'syncBefore', 'syncAfter');
+        triggers: {
+            'click @ui.syncBtn': 'syncWithCloud'
+        },
 
-            this.keyboardEvents[App.settings.appSearch] = 'showSearch';
+        initialize: function () {
+            this.keyboardEvents[this.options.settings.appSearch] = 'showSearch';
 
             // Show sync status
-            this.listenTo(App, 'sync:before', this.syncBefore);
-            this.listenTo(App, 'sync:after', this.syncAfter);
+            this.on('sync:before', this.syncBefore, this);
+            this.on('sync:after', this.syncAfter, this);
         },
 
         onRender: function () {
             var iconClass = (this.options.args.filter === null) ? 'note' : this.options.args.filter;
             this.ui.locationIcon.removeClass();
             this.ui.locationIcon.addClass('icon-' + iconClass);
-        },
-
-        syncWithCloud: function (e) {
-            e.preventDefault();
-            this.trigger('syncWithCloud');
         },
 
         syncBefore: function () {
@@ -64,7 +59,7 @@ define([
         searchSubmit: function (e) {
             e.preventDefault();
             var text = this.ui.navbarSearchInput.val();
-            App.navigate(URI.link('/notes/f/search/q/' + text), true);
+            this.trigger('navigate', URI.link('/notes/f/search/q/' + text));
         },
 
         searchKeyup: function (e) {
@@ -99,44 +94,31 @@ define([
         serializeData: function () {
             return {
                 args: this.options.args,
+                settings: this.options.settings,
                 uri : URI.link('/'),
                 notebooks: (this.options.inNotebooks) ? null : this.options.notebooks,
-                syncButton  : (App.settings.cloudStorage.toString() === '0') ? 'hidden' : '',
-                profiles: App.settings.appProfiles,
                 profile: URI.getProfile()
             };
         },
 
         templateHelpers: function () {
             return {
-                i18n: $.t,
+                isSyncEnabled: function () {
+                    if (this.settings.cloudStorage.toString() === '0') {
+                        return 'hidden';
+                    }
+                },
 
                 urlPage : function () {
-                    if (App.currentApp && App.currentApp.moduleName === 'AppNotebook') {
+                    if (this.args.currentApp === 'AppNotebook') {
                         return URI.link('/notebooks');
                     } else {
                         return URI.link('/notes');
                     }
                 },
 
-                pageTitle: function () {
-                    var title = 'All notes';
-                    if (this.args.filter) {
-                        title = this.args.filter;
-                    }
-                    title = $.t(title.substr(0,1).toUpperCase() + title.substr(1));
-
-                    if (this.args.query && this.args.filter !== 'search') {
-                        title += ': ' + this.args.query;
-                    }
-
-                    return title;
-                },
-
                 pageNumber: function () {
-                    if (this.args.page) {
-                        return this.args.page;
-                    }
+                    return (this.args.page || '');
                 },
 
                 notebook: function (model) {

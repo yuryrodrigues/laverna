@@ -25,11 +25,13 @@ function (_, $, App, Marionette, Template, Checklist, Tags, Img, ace, mathjax, D
         ui: {
             title      :  'input[name="title"]',
             content    :  '.wmd-input',
+            preview    :  '#wmd-preview',
             clipContent :  '#clipContent',
             tags       :  'select[name="tags"]',
             notebookId :  '[name="notebookId"]',
             sCont      :  '.ui-s-content',
             saveBtn    :  '.saveBtn',
+            wordBtn    :  '.wordBtn',
             // Mode stuff
             form       :  '#noteForm',
             wmdBar     :  '#wmd-button-bar',
@@ -41,15 +43,16 @@ function (_, $, App, Marionette, Template, Checklist, Tags, Img, ace, mathjax, D
             'blur @ui.title' : 'noteClipped',
             'click .modeMenu a': 'switchMode',
             'click @ui.saveBtn': 'save',
+            'click @ui.wordBtn': 'word',
             'click .cancelBtn' : 'redirect',
             'keyup @ui.title'  : 'keyupEvents',
-            'change @ui.notebookId': 'newNotebook'
+            'change @ui.notebookId': 'newNotebook',
+            'change @ui.content' : 'word'
         },
 
         initialize: function () {
-            var self = this;
             _.bindAll(this, 'scrollPagedownBar');
-            App.mousetrap.API.pause();
+            App.vent.trigger('mousetrap:toggle');
             this.$body = $('body');
             this.imgHelper = new Img();
 
@@ -57,7 +60,6 @@ function (_, $, App, Marionette, Template, Checklist, Tags, Img, ace, mathjax, D
 
             // Model
             this.listenTo(this.model, 'sync', this.disableSubmitButton);
-            this.listenTo(App, 'new:notebook', this.newNotebookRender);
             this.on('autoSave', this.autoSave, this);
 
             // Pagedown editor
@@ -66,27 +68,10 @@ function (_, $, App, Marionette, Template, Checklist, Tags, Img, ace, mathjax, D
             this.on('pagedown:ready', this.onPagedownReady);
             this.on('pagedown:ready', this.changePagedownMode);
             this.on('pagedown:mode',  this.changePagedownMode);
-
-            // Keybindings
-            this.$document = $(document);
-            this.$document.on('keydown', function (event) {
-                var isS = String.fromCharCode(event.which).toLowerCase() === 's';
-                // Ctrl + s
-                if ( (event.ctrlKey && isS) || (event.metaKey && isS) ) {
-                    event.preventDefault();
-                    self.save();
-                }
-                // Redirect if user hits Esc and editor is focused
-                else if (event.which === 27 && self.editor && self.editor.isFocused()) {
-                    event.preventDefault();
-                    self.redirect(event);
-                }
-            });
         },
 
         onDestroy: function () {
-            this.$document.off('keydown');
-            App.mousetrap.API.unpause();
+            App.vent.trigger('mousetrap:toggle');
             this.imgHelper.clean();
             this.switchMode();
         },
@@ -98,15 +83,15 @@ function (_, $, App, Marionette, Template, Checklist, Tags, Img, ace, mathjax, D
 
         newNotebook: function () {
             if (this.ui.notebookId.find('.newNotebook').is(':selected')) {
-                App.AppNotebook.trigger('showForm', this.options.profile, false);
-            }
-        },
+                App.vent.trigger('notebook:form', this.options.profile, false);
 
-        newNotebookRender: function (model) {
-            var tmpl = $( _.template('<option value="{{id}}">{{name}}</option>', model.decrypt()) );
-            this.ui.notebookId.append(tmpl);
-            tmpl.prop('selected', true);
-            this.options.notebooks.add(model);
+                this.listenTo(App, 'new:notebook', function (model) {
+                    var tmpl = $( _.template('<option value="{{id}}">{{name}}</option>', model.decrypt()) );
+                    this.ui.notebookId.append(tmpl);
+                    tmpl.prop('selected', true);
+                    this.options.notebooks.add(model);
+                });
+            }
         },
 
         enableSubmitButton: function () {
@@ -135,9 +120,16 @@ function (_, $, App, Marionette, Template, Checklist, Tags, Img, ace, mathjax, D
             this.editor.setValue(this.ui.clipContent.val());
         },
 
-        /**
-         * Save note to storage
-         */
+        word: function() {
+            var text = this.editor.getSession().getValue();
+            var wordCount = text.trim().replace(/\s+/gi, ' ').split(' ').length;
+            var charCount = text.replace(/\s+/gi, '').length;
+            if (charCount === 0) { wordCount = 0; }
+
+            this.$('span#wordCount').html(wordCount.toString());
+            this.$('span#charCount').html(charCount.toString());
+        },
+
         save: function (e) {
             var self = this,
                 mayRedirect = (typeof e === 'boolean') ? e : true,
@@ -151,7 +143,7 @@ function (_, $, App, Marionette, Template, Checklist, Tags, Img, ace, mathjax, D
             if (this.editor) {
                 content = this.editor.getSession().getValue().trim();
             } else {
-                content = this.$('#wmd-input').val();
+                content = this.$('div#wmd-input').val();
             }
 
             // Trigger save
@@ -333,11 +325,11 @@ function (_, $, App, Marionette, Template, Checklist, Tags, Img, ace, mathjax, D
                 });
 
                 self.trigger('pagedown:ready');
-                mathjax.init(self.el);
+                mathjax.init(self.ui.preview.el);
 
                 // Save content automatically if user stoped typing for 5 second
                 editor.hooks.chain('onPreviewRefresh', function () {
-                    mathjax.init(self.el);
+                    mathjax.init(self.ui.preview.el);
 
                     self.enableSubmitButton();
                     if (typeof self.timeOut === 'number') {

@@ -6,18 +6,21 @@ define([
 ], function (_, Marionette, App) {
     'use strict';
 
-    var Settings = App.module('AppSettings', {startWithParent : false}),
+    var Settings = App.module('AppSettings', {startWithParent : false, modal: true}),
         executeAction,
         API;
 
     Settings.on('start', function () {
-        App.mousetrap.API.reset();
-        App.log('AppSettings is started');
+        App.vent.trigger('mousetrap:reset');
+        App.log('AppSettings has started');
     });
 
     Settings.on('stop', function () {
-        App.mousetrap.API.restart();
-        App.log('AppSettings is stoped');
+        App.vent.trigger('mousetrap:restart');
+        App.log('AppSettings has stoped');
+
+        API.controller.destroy();
+        delete API.controller;
     });
 
     // The router
@@ -37,7 +40,8 @@ define([
     API = {
         showSettings: function (profile, tab) {
             require(['apps/settings/show/showController'], function (Controller) {
-                executeAction(new Controller().show, {profile: profile, tab: tab});
+                API.controller = new Controller();
+                executeAction(API.controller.show, {profile: profile, tab: tab});
             });
         }
     };

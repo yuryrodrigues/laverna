@@ -7,10 +7,7 @@
     "eo": "Esperanto",
     "es": "Spanish",
     "de": "German",
-    "se": "Swedish",
-    "el": "Greece",
-    "nb": "Norwegian (Bokmal)",
-    "nn": "Norwegian (Nynorsk)",
+    "de_ch": "Swiss German",
     "Search": "Search",
     "All notes": "All notes",
     "Favourites": "Favourites",
@@ -63,8 +60,8 @@
     "Your old encryption password": "Your old encryption password",
     "Please wait until the encryption will be completed": "Please wait until the encryption will be completed",
     "Shortcuts": "Shortcuts",
-    "Newer": "Newer",
-    "Older": "Older",
+    "Previous": "Previous",
+    "Next": "Next",
     "Navigation": "Navigation",
     "navigateTop": "Top",
     "navigateBottom": "Bottom",
@@ -81,5 +78,20 @@
     "App": "App",
     "appCreateNote": "Create new note",
     "appSearch": "Search note",
-    "appKeyboardHelp": "Keyboard help"
+    "appKeyboardHelp": "Keyboard help",
+    "Remove profile": "Are you sure that you want to delete profile '__profile__'?",
+    "Change shortcuts": "Change shortcut settings",
+    "Donate": "Donate",
+    "Github page": "Github page",
+    "Report bugs and issues here": "Report bugs and issues here",
+    "Report bugs through email": "Report bugs through email",
+    "Credits": "Credits",
+    "List of contributors": "List of contributors",
+    "List of all used libraries": "List of all used libraries",
+    "notebooks": {
+        "name": "Please, provide notebook's name"
+    },
+    "tags": {
+        "name": "Tag name is required"
+    }
 }

@@ -15,17 +15,21 @@ define([
             _.bindAll(this, 'show');
         },
 
+        onDestroy: function () {
+            this.view.trigger('destroy');
+            delete this.view;
+        },
+
         show: function () {
-            var view = new View({
+            this.view = new View({
                 appVersion : App.constants.VERSION
             });
-            App.modal.show(view);
-
-            view.on('redirect', this.redirect, this);
+            App.modal.show(this.view);
+            this.view.on('redirect', this.redirect, this);
         },
 
         redirect: function () {
-            App.navigateBack(URI.link('/notes'), true);
+            App.vent.trigger('navigate:back', '/notes');
         }
     });
 
